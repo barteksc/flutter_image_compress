@@ -5,6 +5,7 @@
 #import "CompressFileHandler.h"
 #import "CompressHandler.h"
 #import "SYMetadata.h"
+#import "ExifUtils.h"
 
 @implementation CompressFileHandler {
 
@@ -17,15 +18,21 @@
     int minHeight = [args[2] intValue];
     int quality = [args[3] intValue];
     int rotate = [args[4] intValue];
-
+    BOOL autoCorrectionAngle = [args[5] boolValue];
     int formatType = [args[6] intValue];
     BOOL keepExif = [args[7] boolValue];
 
+    SYMetadata *metadata = [SYMetadata metadataWithFileURL:[NSURL fileURLWithPath:path]];
+
+    int exifRotate = 0;
+    if (autoCorrectionAngle) {
+        exifRotate = exifOrientationToRotation(metadata.orientation);
+    }
+
     UIImage *img = [UIImage imageWithContentsOfFile:path];
-    NSData *data = [CompressHandler compressWithUIImage:img minWidth:minWidth minHeight:minHeight quality:quality rotate:rotate format:formatType];
+    NSData *data = [CompressHandler compressWithUIImage:img minWidth:minWidth minHeight:minHeight quality:quality rotate:rotate + exifRotate format:formatType];
 
     if (keepExif) {
-        SYMetadata *metadata = [SYMetadata metadataWithFileURL:[NSURL fileURLWithPath:path]];
         metadata.orientation = @0;
         data = [SYMetadata dataWithImageData:data andMetadata:metadata];
     }

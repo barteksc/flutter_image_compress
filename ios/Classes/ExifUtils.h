@@ -1,0 +1,2 @@
+
+int exifOrientationToRotation(NSNumber *orientation);

@@ -9,6 +9,7 @@
 #import "CompressListHandler.h"
 #import "CompressHandler.h"
 #import "SYMetadata.h"
+#import "ExifUtils.h"
 
 @implementation CompressListHandler
 
@@ -19,15 +20,22 @@
     int minHeight = [args[2] intValue];
     int quality = [args[3] intValue];
     int rotate = [args[4] intValue];
+    BOOL autoCorrectionAngle = [args[5] boolValue];
     int formatType = [args[6] intValue];
 
     BOOL keepExif = [args[7] boolValue];
 
     NSData *data = [list data];
-    NSData *compressedData = [CompressHandler compressWithData:data minWidth:minWidth minHeight:minHeight quality:quality rotate:rotate format:formatType];
+    SYMetadata *metadata = [SYMetadata metadataWithImageData:data];
+
+    int exifRotate = 0;
+    if (autoCorrectionAngle) {
+        exifRotate = exifOrientationToRotation(metadata.orientation);
+    }
+
+    NSData *compressedData = [CompressHandler compressWithData:data minWidth:minWidth minHeight:minHeight quality:quality rotate:rotate + exifRotate format:formatType];
 
     if (keepExif) {
-        SYMetadata *metadata = [SYMetadata metadataWithImageData:data];
         metadata.orientation = @0;
         compressedData = [SYMetadata dataWithImageData:compressedData andMetadata:metadata];
     }
